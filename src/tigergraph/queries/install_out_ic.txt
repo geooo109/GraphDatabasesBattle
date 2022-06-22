@@ -1,0 +1,129 @@
+Using graph 'ldbc_snb'
+Successfully dropped queries on the graph 'ldbc_snb': [ic_1].
+Successfully created queries: [ic_1].
+Start installing queries, about 1 minute ...
+ic_1 query: curl -X GET 'http://127.0.0.1:9000/query/ldbc_snb/ic_1?personId=VALUE&firstName=VALUE'. Add -H "Authorization: Bearer TOKEN" if authentication is enabled.
+Select 'm1' as compile server, now connecting ...
+Node 'm1' is prepared as compile server.
+
+[                                                                                                        ] 0% (0/1)   [                                                                                                        ] 0% (0/1)   [=================================================                                                       ] 47% (0/1)  [===================================================================================================     ] 95% (0/1)  [========================================================================================================] 100% (1/1) 
+Query installation finished.
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_2].
+Successfully created queries: [ic_2].
+Start installing queries, about 1 minute ...
+ic_2 query: curl -X GET 'http://127.0.0.1:9000/query/ldbc_snb/ic_2?personId=VALUE&maxDate=VALUE'. Add -H "Authorization: Bearer TOKEN" if authentication is enabled.
+Select 'm1' as compile server, now connecting ...
+Node 'm1' is prepared as compile server.
+
+[                                                                                                        ] 0% (0/1)   [                                                                                                        ] 0% (0/1)   [=================================================                                                       ] 47% (0/1)  [===================================================================================================     ] 95% (0/1)  [========================================================================================================] 100% (1/1) 
+Query installation finished.
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_3].
+Successfully created queries: [ic_3].
+Start installing queries, about 1 minute ...
+ic_3 query: curl -X GET 'http://127.0.0.1:9000/query/ldbc_snb/ic_3?personId=VALUE&countryXName=VALUE&countryYName=VALUE&startDate=VALUE&durationDays=VALUE'. Add -H "Authorization: Bearer TOKEN" if authentication is enabled.
+Select 'm1' as compile server, now connecting ...
+Node 'm1' is prepared as compile server.
+
+[                                                                                                        ] 0% (0/1)   [                                                                                                        ] 0% (0/1)   [=================================================                                                       ] 47% (0/1)  [===================================================================================================     ] 95% (0/1)  [========================================================================================================] 100% (1/1) 
+Query installation finished.
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_4].
+Successfully created queries: [ic_4].
+Start installing queries, about 1 minute ...
+ic_4 query: curl -X GET 'http://127.0.0.1:9000/query/ldbc_snb/ic_4?personId=VALUE&startDate=VALUE&durationDays=VALUE'. Add -H "Authorization: Bearer TOKEN" if authentication is enabled.
+Select 'm1' as compile server, now connecting ...
+Node 'm1' is prepared as compile server.
+
+[                                                                                                        ] 0% (0/1)   [                                                                                                        ] 0% (0/1)   [=================================================                                                       ] 47% (0/1)  [===================================================================================================     ] 95% (0/1)  [========================================================================================================] 100% (1/1) 
+Query installation finished.
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_5].
+Successfully created queries: [ic_5].
+Start installing queries, about 1 minute ...
+ic_5 query: curl -X GET 'http://127.0.0.1:9000/query/ldbc_snb/ic_5?personId=VALUE&minDate=VALUE'. Add -H "Authorization: Bearer TOKEN" if authentication is enabled.
+Select 'm1' as compile server, now connecting ...
+Node 'm1' is prepared as compile server.
+
+[                                                                                                        ] 0% (0/1)   [                                                                                                        ] 0% (0/1)   [=================================================                                                       ] 47% (0/1)  [===================================================================================================     ] 95% (0/1)  [========================================================================================================] 100% (1/1) 
+Query installation finished.
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_6].
+Successfully created queries: [ic_6].
+Start installing queries, about 1 minute ...
+ic_6 query: curl -X GET 'http://127.0.0.1:9000/query/ldbc_snb/ic_6?personId=VALUE&tagName=VALUE'. Add -H "Authorization: Bearer TOKEN" if authentication is enabled.
+Select 'm1' as compile server, now connecting ...
+Node 'm1' is prepared as compile server.
+
+[                                                                                                        ] 0% (0/1)   [                                                                                                        ] 0% (0/1)   [=================================================                                                       ] 47% (0/1)  [===================================================================================================     ] 95% (0/1)  [========================================================================================================] 100% (1/1) 
+Query installation finished.
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_7].
+Successfully created queries: [ic_7].
+Start installing queries, about 1 minute ...
+ic_7 query: curl -X GET 'http://127.0.0.1:9000/query/ldbc_snb/ic_7?personId=VALUE'. Add -H "Authorization: Bearer TOKEN" if authentication is enabled.
+Select 'm1' as compile server, now connecting ...
+Node 'm1' is prepared as compile server.
+
+[                                                                                                        ] 0% (0/1)   [                                                                                                        ] 0% (0/1)   [=================================================                                                       ] 47% (0/1)  [===================================================================================================     ] 95% (0/1)  [========================================================================================================] 100% (1/1) 
+Query installation finished.
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_8].
+Successfully created queries: [ic_8].
+Start installing queries, about 1 minute ...
+ic_8 query: curl -X GET 'http://127.0.0.1:9000/query/ldbc_snb/ic_8?personId=VALUE'. Add -H "Authorization: Bearer TOKEN" if authentication is enabled.
+Select 'm1' as compile server, now connecting ...
+Node 'm1' is prepared as compile server.
+
+[                                                                                                        ] 0% (0/1)   [                                                                                                        ] 0% (0/1)   [=================================================                                                       ] 47% (0/1)  [===================================================================================================     ] 95% (0/1)  [========================================================================================================] 100% (1/1) 
+Query installation finished.
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_9].
+Successfully created queries: [ic_9].
+Start installing queries, about 1 minute ...
+ic_9 query: curl -X GET 'http://127.0.0.1:9000/query/ldbc_snb/ic_9?personId=VALUE&maxDate=VALUE'. Add -H "Authorization: Bearer TOKEN" if authentication is enabled.
+Select 'm1' as compile server, now connecting ...
+Node 'm1' is prepared as compile server.
+
+[                                                                                                        ] 0% (0/1)   [                                                                                                        ] 0% (0/1)   [=================================================                                                       ] 47% (0/1)  [===================================================================================================     ] 95% (0/1)  [========================================================================================================] 100% (1/1) 
+Query installation finished.
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_10].
+
+Syntax Error in query ic11: line 14, col 9
+This query does not conform to pre-v2 syntax. If you intend to use multi-hop
+patterns, please specify the v2 syntax version by one of the methods below:
+	1. Use syntax_version session variable (set syntax_version="v2")
+	2. Add the syntax clause to query header, e.g. create query q() syntax v2
+Failed to create queries: [ic11].
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_11].
+Successfully created queries: [ic_11].
+Start installing queries, about 1 minute ...
+ic_11 query: curl -X GET 'http://127.0.0.1:9000/query/ldbc_snb/ic_11?personId=VALUE&countryName=VALUE&workFromYear=VALUE'. Add -H "Authorization: Bearer TOKEN" if authentication is enabled.
+Select 'm1' as compile server, now connecting ...
+Node 'm1' is prepared as compile server.
+
+[                                                                                                        ] 0% (0/1)   [                                                                                                        ] 0% (0/1)   [=================================================                                                       ] 47% (0/1)  [===================================================================================================     ] 95% (0/1)  [========================================================================================================] 100% (1/1) 
+Query installation finished.
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_12].
+
+Semantic Check Error in query ic_12 (SEM-45): line 67, col 71
+The tuple name or the function to_jsonarray is not defined.
+Failed to create queries: [ic_12].
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_13].
+
+Type Check Error in query ic_13 (TYP-500): line 20, col 17
+Incompatible operand types vertex<Person> and SetAccum<vertex<Person>> for the
+operator ==
+Failed to create queries: [ic_13].
+Using graph 'ldbc_snb'
+Semantic Check Fails: These queries could not be found anywhere: [ic_14].
+
+Type Check Error in query ic_14 (TYP-500): line 27, col 17
+Incompatible operand types vertex<Person> and SetAccum<vertex<Person>> for the
+operator ==
+Failed to create queries: [ic_14].

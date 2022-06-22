@@ -1,0 +1,61 @@
+/*
+MATCH (person:Person {id:13194139534485})-[:KNOWS*1..2]-(chain_friend:Person)-[like:LIKES]->(comment:Comment)
+WHERE NOT (person = chain_friend) and comment.length > 100
+WITH DISTINCT chain_friend, comment
+RETURN chain_friend.id as friendId, count (comment.id) as msgLikes
+ORDER BY friendId
+LIMIT 50
+*/
+
+USE GRAPH ldbc_snb
+DROP QUERY mib_1
+
+CREATE QUERY mib_1(Set<VERTEX<Person>> personId, INT minMessageLength) FOR GRAPH ldbc_snb { 
+  TYPEDEF TUPLE<INT id, INT counter> friendInfo;
+  SetAccum<VERTEX<Person>> @@friendAccumSet;
+  HeapAccum<friendInfo>(50, id ASC) @@finalAccum;
+  SumAccum<INT> @fcount;
+  OrAccum @visited;
+
+  vPerson = { personId };
+
+  INT i = 0;
+  vPerson = { personId };
+  WHILE i < 2 DO
+    vPerson = 
+      SELECT t
+      FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t
+      WHERE t.@visited == False
+      ACCUM 
+        s.@visited += True,
+        t.@visited += True,
+        @@friendAccumSet += t;
+      //POST-ACCUM
+      //  @@friendInfoTop += friendInfo(t, t.id);
+
+    //IF @@friendInfoTop.size() >= 50 THEN BREAK; END;
+ 
+    i = i + 1;
+  END;
+
+  /*
+  FOREACH f IN @@friendInfoTop DO
+    @@friendAll += f.v;
+  END;
+  vFriend = { @@friendAll };
+  */
+
+  vFriend = { @@friendAccumSet };
+  //PRINT vFriend.size();
+  
+  vFriend =
+    SELECT s
+    FROM vFriend:s-(Person_LIKES_Comment:e)->Comment:c
+    ACCUM CASE WHEN c.length > minMessageLength THEN s.@fcount += 1 END
+    POST-ACCUM @@finalAccum += friendInfo(s.id, s.@fcount);
+  
+  PRINT @@finalAccum;
+  //RETURN @@finalAccum;
+}
+
+INSTALL QUERY mib_1

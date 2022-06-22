@@ -1,0 +1,48 @@
+
+/*
+MATCH (person:Person {id:13194139534485})-[:KNOWS]-(friend:Person)<-[:HAS_CREATOR]-(post:Post)-[:HAS_TAG]->(tag:Tag)-[:HAS_TYPE]->(tagClass:TagClass)
+WHERE (post.language = "uz") AND (tagClass.name = "Person")
+RETURN DISTINCT post.id as postId, tagClass.name as tagClassName
+*/
+
+USE GRAPH ldbc_snb
+DROP QUERY mib_3
+
+CREATE QUERY mib_3(Set<VERTEX<Person>> personId, String browserName) FOR GRAPH ldbc_snb { 
+  TYPEDEF TUPLE<INT finalId, DATETIME creationDate> friendInfo;
+  SetAccum<VERTEX<Person>> @@friendAccumSet;
+  HeapAccum<friendInfo>(10, creationDate ASC) @@finalAccum;
+  SumAccum<INT> @fcount;
+  OrAccum @visited;
+
+  vPerson = { personId };
+
+  INT i = 0;
+  vPerson = { personId };
+  WHILE i < 2 DO
+    vPerson = 
+      SELECT t
+      FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t
+      WHERE t.@visited == False
+      ACCUM 
+        s.@visited += True,
+        t.@visited += True,
+        @@friendAccumSet += t;
+    i = i + 1;
+  END;
+  
+  vFriend = { @@friendAccumSet };
+  
+  vPost = 
+    SELECT t
+    FROM vFriend:s-(Post_HAS_CREATOR_Person_REVERSE:e)->Post:t
+    ACCUM 
+    CASE WHEN t.browserUsed == browserName
+    THEN 
+      @@finalAccum += friendInfo(t.id, t.creationDate) 
+    END;
+    
+    PRINT @@finalAccum;
+}
+
+INSTALL QUERY mib_3

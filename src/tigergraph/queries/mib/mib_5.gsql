@@ -1,0 +1,30 @@
+/*
+MATCH (:Person {id:21990232559044}) - [:WORK_AT] -> (:Company) - [:IS_LOCATED_IN] -> (country:Country) - [:IS_PART_OF] -> (continent:Continent)
+RETURN continent
+*/
+
+USE GRAPH ldbc_snb
+DROP QUERY mib_5
+
+CREATE QUERY mib_5(Set<VERTEX<Person>>  personId) FOR GRAPH ldbc_snb { 
+  
+  vPerson = { personId };
+  
+  vCompany = 
+    SELECT c
+    FROM vPerson:p-(Person_WORK_AT_Company:e)-> Company:c;        
+  
+  vCountry = 
+    SELECT c
+    FROM vCompany:vc-(Company_IS_LOCATED_IN_Country:e)->Country:c;
+  
+  vContinent = 
+    SELECT c
+    FROM vCountry:vc-(Country_IS_PART_OF_Continent:e)->Continent:c;
+  
+  
+  PRINT vContinent; 
+}
+
+
+INSTALL QUERY mib_5

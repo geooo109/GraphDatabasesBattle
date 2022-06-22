@@ -1,0 +1,34 @@
+/*
+MATCH (person:Person {id:13194139534485}) - [:IS_LOCATED_IN] -> (:City) - [:IS_PART_OF] -> (country:Country) <- [:IS_LOCATED_IN] - (message:Message)
+WHERE message.creationDate < datetime("2010-12-17T11:10:21.570Z")
+RETURN DISTINCT country.name, message.browserUsed
+*/
+
+USE GRAPH ldbc_snb
+DROP QUERY mib_8
+
+CREATE QUERY mib_8(Set<Vertex<Person>> personId, DATETIME creationDateInput) FOR GRAPH ldbc_snb { 
+  TYPEDEF TUPLE<STRING countryName, STRING broweserUsed> msgInfo;
+  SetAccum<msgInfo> @@resMsg;
+  
+  vPerson = { personId };
+  
+  vCity = 
+    SELECT c
+    FROM vPerson:s-(Person_IS_LOCATED_IN_City:e)->City:c;
+  
+  vCountry =
+    SELECT coun
+    FROM vCity:c-(City_IS_PART_OF_Country)->Country:coun;
+  
+  vMsg = 
+    SELECT p
+    FROM vCountry:c-((Post_IS_LOCATED_IN_Country_REVERSE|Comment_IS_LOCATED_IN_Country_REVERSE):e)->(Comment|Post):p
+    ACCUM CASE 
+    WHEN p.creationDate < creationDateInput 
+      THEN @@resMsg += msgInfo(c.name, p.browserUsed)
+    END;
+  PRINT @@resMsg; 
+}
+
+INSTALL QUERY mib_8

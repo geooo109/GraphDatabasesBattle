@@ -1,0 +1,15 @@
+gsql ./ic/ic_1.gsql
+gsql ./ic/ic_2.gsql
+gsql ./ic/ic_3.gsql
+gsql ./ic/ic_4.gsql
+gsql ./ic/ic_5.gsql
+gsql ./ic/ic_6.gsql
+gsql ./ic/ic_7.gsql
+gsql ./ic/ic_8.gsql
+gsql ./ic/ic_9.gsql
+gsql ./ic/ic_10.gsql
+gsql ./ic/ic_11.gsql
+gsql ./helper/to_jsonarray.gsql
+gsql ./ic/ic_12.gsql
+gsql ./ic/ic_13.gsql
+gsql ./ic/ic_14.gsql

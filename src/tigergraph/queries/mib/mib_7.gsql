@@ -1,0 +1,44 @@
+/*
+MATCH (:Person {id:13194139534485})-[path:KNOWS*1..4]-(friend:Person) 
+WHERE friend.firstName = "Michael"
+WITH friend, min(size(path)) AS distance
+ORDER BY distance ASC, friend.lastName ASC, friend.id DESC
+LIMIT 15
+RETURN distance, friend.lastName, friend.id
+*/
+
+USE GRAPH ldbc_snb
+DROP QUERY mib_7
+
+CREATE QUERY mib_7(Set<Vertex<Person>> personId, String fristNameInput) FOR GRAPH ldbc_snb { 
+  TYPEDEF TUPLE<INT distanceFromPerson, STRING lastName, INT personId> friendInfo;
+  HeapAccum<friendInfo>(15, distanceFromPerson ASC, lastName ASC, personId ASC) @@friendInfoTop;
+  SetAccum<VERTEX<Person>> @@friendAll;
+  SumAccum<INT> @distance;
+
+  OrAccum @visited = False;
+  INT i = 0;
+
+  vPerson = { personId };
+  WHILE i < 4 DO
+    vPerson =
+      SELECT t
+      FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t
+      WHERE t.@visited == False
+      ACCUM
+        s.@visited += True,
+        t.@visited += True,
+        t.@distance = (i+1)
+      POST-ACCUM
+        CASE WHEN t.firstName == fristNameInput THEN
+          @@friendInfoTop += friendInfo(t.@distance, t.lastName, t.id)
+        END;
+
+    IF @@friendInfoTop.size() >= 15 THEN BREAK; END;
+    i = i + 1;
+  END;
+
+  PRINT @@friendInfoTop; 
+}
+
+INSTALL QUERY mib_7

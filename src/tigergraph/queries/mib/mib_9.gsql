@@ -1,0 +1,47 @@
+/*
+MATCH (person:Person {id:13194139534485})-[:KNOWS*1..2]-(chain_friend:Person)
+WHERE person.id <> chain_friend.id
+WITH DISTINCT chain_friend as ff
+MATCH(ff:Person)<-[HAS_MEMBER]-(forum:Forum)
+WHERE forum.creationDate < datetime("2011-08-17T11:10:0.000Z")
+RETURN count(*) as counting
+*/
+
+USE GRAPH ldbc_snb
+DROP QUERY mib_9
+
+CREATE QUERY mib_9(Set<VERTEX<Person>> personId, DATETIME inputDate) FOR GRAPH ldbc_snb { 
+   TYPEDEF TUPLE<INT id, INT counter> friendInfo;
+  SetAccum<VERTEX<Person>> @@friendAccumSet;
+  SumAccum<INT> @@finalCount;
+  OrAccum @visited;
+
+  INT i = 0;
+  vPerson = { personId };
+  WHILE i < 2 DO
+    vPerson = 
+      SELECT t
+      FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t
+      WHERE t.@visited == False
+      ACCUM 
+        s.@visited += True,
+        t.@visited += True,
+        @@friendAccumSet += t;
+    i = i + 1;
+  END;
+
+  vFriend = { @@friendAccumSet };
+  
+  vForum = 
+    SELECT f
+    FROM vFriend:friend-((Forum_HAS_MEMBER_Person_REVERSE|Forum_HAS_MODERATOR_Person_REVERSE):e)->Forum:f
+    ACCUM 
+    CASE WHEN f.creationDate < inputDate
+    THEN 
+      @@finalCount += 1
+    END;
+  
+  PRINT @@finalCount;
+}
+
+INSTALL QUERY mib_9

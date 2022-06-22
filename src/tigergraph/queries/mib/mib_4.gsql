@@ -1,0 +1,46 @@
+/*
+MATCH (person:Person {id:13194139534485}) <- [:HAS_MEMBER] - (forum:Forum) - [:HAS_TAG] -> (tag:Tag) <- [:HAS_TAG] - (post:Post)
+WHERE post.creationDate  < datetime("2011-11-17T11:10:21.000Z")
+RETURN DISTINCT post.id, post.content, post.creationDate ORDER BY post.creationDate ASC LIMIT 30
+*/
+
+USE GRAPH ldbc_snb
+DROP QUERY mib_4
+
+CREATE QUERY mib_4(Set<VERTEX<Person>>  personId, DATETIME dateInput) FOR GRAPH ldbc_snb {
+  TYPEDEF TUPLE<INT postId, STRING postContent, DATETIME postCreationDate> postInfo;
+  HeapAccum<postInfo>(30, postCreationDate ASC) @@finalAccum;
+  SetAccum<VERTEX<Post>> @@repRmoveMap;
+  SumAccum<INT> @postId;
+    
+  vPerson = { personId };
+  
+  vForum = 
+    SELECT f
+    FROM vPerson:s-(Forum_HAS_MEMBER_Person_REVERSE:e)->Forum:f;
+  
+  vTag =     
+    SELECT t
+    FROM vForum:f-(Forum_HAS_TAG_Tag:e)->Tag:t;
+  
+  vPOST = 
+    SELECT p
+    FROM vTag:tag-(Post_HAS_TAG_Tag_REVERSE:e)->Post:p
+    ACCUM 
+    CASE WHEN p.creationDate < dateInput 
+    THEN 
+      @@repRmoveMap += p
+    END;
+  
+  vStart = { @@repRmoveMap };
+  
+  vStart = SELECT p 
+   FROM vStart:p
+   ACCUM @@finalAccum += postInfo(p.id, p.content, p.creationDate);
+
+  //PRINT @@finalAccum.size();
+  
+  PRINT @@finalAccum; 
+}
+
+INSTALL QUERY mib_4

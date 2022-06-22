@@ -1,0 +1,52 @@
+/*
+MATCH (person:Person {id:13194139534485})-[:KNOWS*1..2]-(chain_friend:Person)- [:HAS_INTEREST] -> (tag:Tag {name:"Juan_Perón"}) <- [:HAS_TAG] - (comment:Comment)
+WHERE comment.creationDate > datetime("2012-08-17T11:10:21.570Z")
+RETURN comment.id as commentId, comment.browserUsed as Browser, comment.creationDate as creationDate
+ORDER BY comment.creationDate ASC LIMIT 50
+*/
+
+USE GRAPH ldbc_snb
+DROP QUERY mib_6
+
+CREATE QUERY mib_6(Set<VERTEX<Person>> personId, DATETIME dateInput, String tagNameInput) FOR GRAPH ldbc_snb { 
+  TYPEDEF TUPLE<INT commentId, STRING commentBrowserUsed, DATETIME postCreationDate> commentInfo;
+  
+  HeapAccum<commentInfo>(50, postCreationDate ASC) @@finalAccum;
+  SetAccum<VERTEX<Person>> @@friendAccumSet;
+  OrAccum @visited;
+  
+  INT i = 0;
+  vPerson = { personId };
+  WHILE i < 2 DO
+    vPerson = 
+      SELECT t
+      FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t
+      WHERE t.@visited == False
+      ACCUM 
+        s.@visited += True,
+        t.@visited += True,
+        @@friendAccumSet += t;
+    i = i + 1;
+  END;
+  
+  vFriend = { @@friendAccumSet };
+
+  vTag = 
+    SELECT t
+    FROM vFriend:s-(Person_HAS_INTEREST_Tag:e)->Tag:t
+    WHERE t.name == tagNameInput;
+  
+  vComment = 
+    SELECT c 
+    FROM vTag:t-(Comment_HAS_TAG_Tag_REVERSE)->Comment:c
+    ACCUM 
+    CASE WHEN c.creationDate > dateInput
+    THEN 
+      @@finalAccum += commentInfo(c.id, c.browserUsed, c.creationDate) 
+    END;
+    
+  
+    PRINT  @@finalAccum; 
+}
+
+INSTALL QUERY mib_6

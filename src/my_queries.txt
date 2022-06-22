@@ -1,0 +1,462 @@
+NEO4J AND TIGERGRAPH
+
+===========================================================================
+MIB_1
+/*
+MATCH (person:Person {id:13194139534485})-[:KNOWS*1..2]-(chain_friend:Person)-[like:LIKES]->(comment:Comment)
+WHERE NOT (person = chain_friend) and comment.length > 100
+WITH DISTINCT chain_friend, comment
+RETURN chain_friend.id as friendId, count (comment.id) as msgLikes
+ORDER BY friendId
+LIMIT 50
+*/
+
+CREATE QUERY mib_1(Set<VERTEX<Person>> personId, INT minMessageLength) FOR GRAPH ldbc_snb { 
+  TYPEDEF TUPLE<INT id, INT counter> friendInfo;
+  SetAccum<VERTEX<Person>> @@friendAccumSet;
+  HeapAccum<friendInfo>(50, id ASC) @@finalAccum;
+  SumAccum<INT> @fcount;
+  OrAccum @visited;
+
+  vPerson = { personId };
+
+  INT i = 0;
+  vPerson = { personId };
+  WHILE i < 2 DO
+    vPerson = 
+      SELECT t
+      FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t
+      WHERE t.@visited == False
+      ACCUM 
+        s.@visited += True,
+        t.@visited += True,
+        @@friendAccumSet += t;
+      //POST-ACCUM
+      //  @@friendInfoTop += friendInfo(t, t.id);
+
+    //IF @@friendInfoTop.size() >= 50 THEN BREAK; END;
+ 
+    i = i + 1;
+  END;
+
+  /*
+  FOREACH f IN @@friendInfoTop DO
+    @@friendAll += f.v;
+  END;
+  vFriend = { @@friendAll };
+  */
+
+  vFriend = { @@friendAccumSet };
+  //PRINT vFriend.size();
+  
+  vFriend =
+    SELECT s
+    FROM vFriend:s-(Person_LIKES_Comment:e)->Comment:c
+    ACCUM CASE WHEN c.length > minMessageLength THEN s.@fcount += 1 END
+    POST-ACCUM @@finalAccum += friendInfo(s.id, s.@fcount);
+  
+  PRINT @@finalAccum;
+  
+}
+
+
+==============================================================
+MIB_2
+/*
+MATCH (person:Person {id:13194139534485})-[:KNOWS]-(friend:Person)<-[:HAS_CREATOR]-(post:Post)-[:HAS_TAG]->(tag:Tag)-[:HAS_TYPE]->(tagClass:TagClass)
+WHERE (post.language = "uz") AND (tagClass.name = "Person")
+RETURN DISTINCT post.id as postId, tagClass.name as tagClassName
+*/
+
+CREATE QUERY mib_2(Set<VERTEX<Person>>  personId, String tagClassInput, String languageInput) FOR GRAPH ldbc_snb {
+  TYPEDEF TUPLE<INT poastId, STRING tagClass> postTagInfo;
+  ListAccum<postTagInfo> @@finalAccum;
+  
+  SumAccum<INT> @postId;
+    
+  vPerson = { personId };
+  
+  vFriend = 
+    SELECT t
+    FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t;
+  
+  vPost = 
+    SELECT t
+    FROM vFriend:s-(Post_HAS_CREATOR_Person_REVERSE:e)->Post:t
+    WHERE t.lang == languageInput;
+  
+  vTag = 
+    SELECT t
+    FROM vPost:s-(Post_HAS_TAG_Tag:e)->Tag:t
+    ACCUM t.@postId = s.id;
+  
+  vTagClass = SELECT tc
+    FROM vTag:t-(Tag_HAS_TYPE_TagClass:re)->TagClass:tc
+    ACCUM 
+    CASE WHEN tc.name == tagClassInput 
+    THEN 
+      @@finalAccum += postTagInfo(t.@postId, tc.name) 
+    END;
+  //PRINT @@finalAccum.size();
+  
+  PRINT @@finalAccum; 
+}
+
+
+//  HeapAccum<postTagInfo>(100, poastId ASC) @@finalAccum;
+
+==========================================================
+
+MIB_3
+MATCH (:Person {id:13194139534485})-[:KNOWS*1..2]-(friend:Person)<-[:HAS_CREATOR]-(post:Post {browserUsed:"Firefox"})
+RETURN DISTINCT  post.id as finalId, post.creationDate as creationDate
+ORDER BY post.creationDate ASC
+LIMIT 10
+
+CREATE QUERY mib_3(Set<VERTEX<Person>> personId, String browserName) FOR GRAPH ldbc_snb { 
+  TYPEDEF TUPLE<INT finalId, DATETIME creationDate> friendInfo;
+  SetAccum<VERTEX<Person>> @@friendAccumSet;
+  HeapAccum<friendInfo>(10, creationDate ASC) @@finalAccum;
+  SumAccum<INT> @fcount;
+  OrAccum @visited;
+
+  vPerson = { personId };
+
+  INT i = 0;
+  vPerson = { personId };
+  WHILE i < 2 DO
+    vPerson = 
+      SELECT t
+      FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t
+      WHERE t.@visited == False
+      ACCUM 
+        s.@visited += True,
+        t.@visited += True,
+        @@friendAccumSet += t;
+    i = i + 1;
+  END;
+  
+  vFriend = { @@friendAccumSet };
+  
+  vPost = 
+    SELECT t
+    FROM vFriend:s-(Post_HAS_CREATOR_Person_REVERSE:e)->Post:t
+    ACCUM 
+    CASE WHEN t.browserUsed == browserName
+    THEN 
+      @@finalAccum += friendInfo(t.id, t.creationDate) 
+    END;
+    
+    PRINT @@finalAccum;
+}
+
+=====================================================================
+
+MIB_4
+MATCH (person:Person {id:13194139534485}) <- [:HAS_MEMBER] - (forum:Forum) - [:HAS_TAG] -> (tag:Tag) <- [:HAS_TAG] - (post:Post)
+WHERE post.creationDate  < datetime("2011-11-17T11:10:21.000Z")
+RETURN DISTINCT post.id, post.content, post.creationDate ORDER BY post.creationDate ASC LIMIT 30
+
+
+CREATE QUERY mib_4(Set<VERTEX<Person>>  personId, DATETIME dateInput) FOR GRAPH ldbc_snb {
+  TYPEDEF TUPLE<INT postId, STRING postContent, DATETIME postCreationDate> postInfo;
+  HeapAccum<postInfo>(30, postCreationDate ASC) @@finalAccum;
+  SetAccum<VERTEX<Post>> @@repRmoveMap;
+  SumAccum<INT> @postId;
+    
+  vPerson = { personId };
+  
+  vForum = 
+    SELECT f
+    FROM vPerson:s-(Forum_HAS_MEMBER_Person_REVERSE:e)->Forum:f;
+  
+  vTag =     
+    SELECT t
+    FROM vForum:f-(Forum_HAS_TAG_Tag:e)->Tag:t;
+  
+  vPOST = 
+    SELECT p
+    FROM vTag:tag-(Post_HAS_TAG_Tag_REVERSE:e)->Post:p
+    ACCUM 
+    CASE WHEN p.creationDate < dateInput 
+    THEN 
+      @@repRmoveMap += p
+    END;
+  
+  vStart = { @@repRmoveMap };
+  
+  vStart = SELECT p 
+   FROM vStart:p
+   ACCUM @@finalAccum += postInfo(p.id, p.content, p.creationDate);
+
+  //PRINT @@finalAccum.size();
+  
+  PRINT @@finalAccum; 
+}
+
+=========================================================================================================
+MIB_5
+/*
+MATCH (:Person {id:21990232559044}) - [:WORK_AT] -> (:Company) - [:IS_LOCATED_IN] -> (country:Country) - [:IS_PART_OF] -> (continent:Continent)
+RETURN continent
+*/
+
+CREATE QUERY mib_5(Set<VERTEX<Person>>  personId) FOR GRAPH ldbc_snb { 
+  
+  vPerson = { personId };
+  
+  vCompany = 
+    SELECT c
+    FROM vPerson:p-(Person_WORK_AT_Company:e)-> Company:c;        
+  
+  vCountry = 
+    SELECT c
+    FROM vCompany:vc-(Company_IS_LOCATED_IN_Country:e)->Country:c;
+  
+  vContinent = 
+    SELECT c
+    FROM vCountry:vc-(Country_IS_PART_OF_Continent:e)->Continent:c;
+  
+  
+  PRINT vContinent; 
+}
+
+=========================================================================================================
+
+MI_6
+
+/*
+MATCH (person:Person {id:13194139534485})-[:KNOWS*1..2]-(chain_friend:Person)- [:HAS_INTEREST] -> (tag:Tag {name:"Juan_Perón"}) <- [:HAS_TAG] - (comment:Comment)
+WHERE comment.creationDate > datetime("2012-08-17T11:10:21.570Z")
+RETURN comment.id as commentId, comment.browserUsed as Browser, comment.creationDate as creationDate
+ORDER BY comment.creationDate ASC LIMIT 50
+*/
+
+CREATE QUERY mib_6(Set<VERTEX<Person>> personId, DATETIME dateInput, String tagNameInput) FOR GRAPH ldbc_snb { 
+  TYPEDEF TUPLE<INT commentId, STRING commentBrowserUsed, DATETIME postCreationDate> commentInfo;
+  
+  HeapAccum<commentInfo>(50, postCreationDate ASC) @@finalAccum;
+  SetAccum<VERTEX<Person>> @@friendAccumSet;
+  OrAccum @visited;
+  
+  INT i = 0;
+  vPerson = { personId };
+  WHILE i < 2 DO
+    vPerson = 
+      SELECT t
+      FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t
+      WHERE t.@visited == False
+      ACCUM 
+        s.@visited += True,
+        t.@visited += True,
+        @@friendAccumSet += t;
+    i = i + 1;
+  END;
+  
+  vFriend = { @@friendAccumSet };
+
+  vTag = 
+    SELECT t
+    FROM vFriend:s-(Person_HAS_INTEREST_Tag:e)->Tag:t
+    WHERE t.name == tagNameInput;
+  
+  vComment = 
+    SELECT c 
+    FROM vTag:t-(Comment_HAS_TAG_Tag_REVERSE)->Comment:c
+    ACCUM 
+    CASE WHEN c.creationDate > dateInput
+    THEN 
+      @@finalAccum += commentInfo(c.id, c.browserUsed, c.creationDate) 
+    END;
+    
+  
+    PRINT  @@finalAccum; 
+}
+
+==================================================================================
+
+MI_7
+
+/*
+MATCH (:Person {id:13194139534485})-[path:KNOWS*1..4]-(friend:Person) 
+WHERE friend.firstName = "Michael"
+WITH friend, min(size(path)) AS distance
+ORDER BY distance ASC, friend.lastName ASC, friend.id DESC
+LIMIT 15
+RETURN distance, friend.lastName, friend.id
+*/
+
+CREATE QUERY mib_7(Set<Vertex<Person>> personId, String fristNameInput) FOR GRAPH ldbc_snb { 
+  TYPEDEF TUPLE<INT distanceFromPerson, STRING lastName, INT personId> friendInfo;
+  HeapAccum<friendInfo>(15, distanceFromPerson ASC, lastName ASC, personId ASC) @@friendInfoTop;
+  SetAccum<VERTEX<Person>> @@friendAll;
+  SumAccum<INT> @distance;
+
+  OrAccum @visited = False;
+  INT i = 0;
+
+  vPerson = { personId };
+  WHILE i < 4 DO
+    vPerson =
+      SELECT t
+      FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t
+      WHERE t.@visited == False
+      ACCUM
+        s.@visited += True,
+        t.@visited += True,
+        t.@distance = (i+1)
+      POST-ACCUM
+        CASE WHEN t.firstName == fristNameInput THEN
+          @@friendInfoTop += friendInfo(t.@distance, t.lastName, t.id)
+        END;
+
+    IF @@friendInfoTop.size() >= 15 THEN BREAK; END;
+    i = i + 1;
+  END;
+
+  PRINT @@friendInfoTop; 
+}
+
+=============================================================================
+
+MI_8
+
+/*
+MATCH (person:Person {id:13194139534485}) - [:IS_LOCATED_IN] -> (:City) - [:IS_PART_OF] -> (country:Country) <- [:IS_LOCATED_IN] - (message:Message)
+WHERE message.creationDate < datetime("2010-12-17T11:10:21.570Z")
+RETURN DISTINCT country.name, message.browserUsed
+*/
+
+CREATE QUERY mib_8(Set<Vertex<Person>> personId, DATETIME creationDateInput) FOR GRAPH ldbc_snb { 
+  TYPEDEF TUPLE<STRING countryName, STRING broweserUsed> msgInfo;
+  SetAccum<msgInfo> @@resMsg;
+  
+  vPerson = { personId };
+  
+  vCity = 
+    SELECT c
+    FROM vPerson:s-(Person_IS_LOCATED_IN_City:e)->City:c;
+  
+  vCountry =
+    SELECT coun
+    FROM vCity:c-(City_IS_PART_OF_Country)->Country:coun;
+  
+  vMsg = 
+    SELECT p
+    FROM vCountry:c-((Post_IS_LOCATED_IN_Country_REVERSE|Comment_IS_LOCATED_IN_Country_REVERSE):e)->(Comment|Post):p
+    ACCUM CASE 
+    WHEN p.creationDate < creationDateInput 
+      THEN @@resMsg += msgInfo(c.name, p.browserUsed)
+    END;
+  PRINT @@resMsg; 
+}
+
+=============================================================================
+
+MI_9
+
+/*
+MATCH (person:Person {id:13194139534485})-[:KNOWS*1..2]-(chain_friend:Person)
+WHERE person.id <> chain_friend.id
+WITH DISTINCT chain_friend as ff
+MATCH(ff:Person)<-[HAS_MEMBER]-(forum:Forum)
+WHERE forum.creationDate < datetime("2011-08-17T11:10:0.000Z")
+RETURN count(*) as counting
+*/
+
+CREATE QUERY mib_9(Set<VERTEX<Person>> personId, DATETIME inputDate) FOR GRAPH ldbc_snb { 
+   TYPEDEF TUPLE<INT id, INT counter> friendInfo;
+  SetAccum<VERTEX<Person>> @@friendAccumSet;
+  SumAccum<INT> @@finalCount;
+  OrAccum @visited;
+
+  INT i = 0;
+  vPerson = { personId };
+  WHILE i < 2 DO
+    vPerson = 
+      SELECT t
+      FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t
+      WHERE t.@visited == False
+      ACCUM 
+        s.@visited += True,
+        t.@visited += True,
+        @@friendAccumSet += t;
+    i = i + 1;
+  END;
+
+  vFriend = { @@friendAccumSet };
+  
+  vForum = 
+    SELECT f
+    FROM vFriend:friend-((Forum_HAS_MEMBER_Person_REVERSE|Forum_HAS_MODERATOR_Person_REVERSE):e)->Forum:f
+    ACCUM 
+    CASE WHEN f.creationDate < inputDate
+    THEN 
+      @@finalCount += 1
+    END;
+  
+  PRINT @@finalCount;
+}
+
+==============================================================================================
+
+MI_10
+
+/*
+MATCH (m:Message {id : 481036473215})<-[:REPLY_OF]-(c:Comment)-[:HAS_CREATOR]->(p:Person)- [:STUDY_AT] -> (uni:University)
+RETURN   
+  CASE uni
+    WHEN null THEN ""
+    ELSE uni.name END as UniversityName
+*/
+
+CREATE QUERY mib_10(STRING messageIdInput) FOR GRAPH ldbc_snb { 
+  TYPEDEF TUPLE< DATETIME commentCreationDate, STRING universityName> resInfo;
+  ListAccum<resInfo> @@res;
+  SetAccum<STRING> @@seed;
+  SumAccum<INT> @friendId;
+  
+  @@seed += messageIdInput;
+  vMessage = to_vertex_set(@@seed, "Comment");
+
+  IF vMessage.size() == 0 THEN
+    vMessage = to_vertex_set(@@seed, "Post");
+  
+    vComment = 
+      SELECT c
+      FROM vMessage:vm-(Comment_REPLY_OF_Post_REVERSE:e)->Comment:c;
+  
+    vPersonCreator = 
+      SELECT pc
+      FROM vComment:cv-(Comment_HAS_CREATOR_Person:e)->Person:pc;
+    
+    vUniversity = 
+      SELECT u
+      FROM vPersonCreator:t-(Person_STUDY_AT_University:e)->University:u
+      ORDER BY u.name;
+  
+    PRINT vUniversity[vUniversity.name];
+  
+  ELSE
+    vComment = 
+      SELECT c
+      FROM vMessage:vm-(Comment_REPLY_OF_Comment_REVERSE:e)->Comment:c;
+  
+    vPersonCreator = 
+      SELECT pc
+      FROM vComment:cv-(Comment_HAS_CREATOR_Person:e)->Person:pc;
+    
+    vUniversity = 
+      SELECT u
+      FROM vPersonCreator:t-(Person_STUDY_AT_University:e)->University:u
+      ORDER BY u.name;
+  
+    PRINT vUniversity[vUniversity.name];
+
+  END;
+  
+}
+
+
+
+

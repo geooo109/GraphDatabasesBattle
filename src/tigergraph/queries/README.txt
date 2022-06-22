@@ -1,0 +1,2 @@
+1) Run install_{all,si,ic,bi}.sh to install the predefined queries in order to run them via the python scripts
+(before this the Tigergraph server must be up and preloaded, chech the load_scripts directory for more info)

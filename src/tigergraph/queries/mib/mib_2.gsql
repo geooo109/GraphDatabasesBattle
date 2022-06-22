@@ -1,0 +1,55 @@
+/*
+MATCH (person:Person {id:13194139534485})-[:KNOWS]-(friend:Person)<-[:HAS_CREATOR]-(post:Post)-[:HAS_TAG]->(tag:Tag)-[:HAS_TYPE]->(tagClass:TagClass)
+WHERE (post.language = "uz") AND (tagClass.name = "Person")
+RETURN DISTINCT post.id as postId, tagClass.name as tagClassName
+*/
+
+USE GRAPH ldbc_snb
+DROP QUERY mib_2
+
+
+CREATE QUERY mib_2(Set<VERTEX<Person>>  personId, String tagClassInput, String languageInput) FOR GRAPH ldbc_snb {
+  TYPEDEF TUPLE<INT postId, STRING tagClass> postTagInfo;
+  //  HeapAccum<postTagInfo>(100, poastId ASC) @@finalAccum;
+  ListAccum<postTagInfo> @@finalAccum;
+  
+  SumAccum<INT> @postId;
+    
+  vPerson = { personId };
+  
+  vFriend = 
+    SELECT t
+    FROM vPerson:s-((Person_KNOWS_Person|Person_KNOWS_Person_REVERSE):e)->Person:t;
+  
+  vPost = 
+    SELECT t
+    FROM vFriend:s-(Post_HAS_CREATOR_Person_REVERSE:e)->Post:t
+    WHERE t.lang == languageInput;
+  
+  vTag = 
+    SELECT t
+    FROM vPost:s-(Post_HAS_TAG_Tag:e)->Tag:t
+    ACCUM t.@postId = s.id;
+  
+  vTagClass = SELECT tc
+              FROM vTag:t-(Tag_HAS_TYPE_TagClass:re)->TagClass:tc
+              ACCUM 
+              CASE WHEN tc.name == tagClassInput 
+              THEN 
+                @@finalAccum += postTagInfo(t.@postId, tc.name) 
+              END;
+  PRINT @@finalAccum; 
+  
+  /*
+  vTagClass = SELECT tc
+              FROM vTag:t-(Tag_HAS_TYPE_TagClass:re)->TagClass:tc
+              ACCUM 
+              CASE WHEN tc.name == tagClassInput 
+              THEN 
+                tc.@postId = t.@postId 
+              END;              
+
+  PRINT vTagClass[vTagClass.@postId, vTagClass.name];
+  */
+}
+INSTALL QUERY mib_2
