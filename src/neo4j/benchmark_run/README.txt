@@ -9,4 +9,4 @@ flags:
 	
 
 Note:
-Do not forger to change the output file in the main_neo4j_benchmark.py file
+Do not forget to change the output file in the main_neo4j_benchmark.py file
